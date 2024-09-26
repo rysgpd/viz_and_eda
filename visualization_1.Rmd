@@ -55,3 +55,199 @@ ggp_weather_scatterplot =
 ggp_weather_scatterplot
 ```
 
+## Fancier Scatterplot
+
+```{r}
+
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.3) + 
+  geom_smooth(se = FALSE)
+
+```
+
+Where you define aesthetics can matter
+
+```{r}
+
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name), alpha = 0.3) + # if color is here, that's only applied to the points
+  geom_smooth(se = FALSE)
+
+```
+
+Use faceting real quick
+
+```{r}
+
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.3) + # if color is here, that's only applied to the points
+  geom_smooth(se = FALSE) +
+  facet_grid(. ~ name)
+
+```
+
+Let's make more interesting scatterplots
+
+```{r}
+
+weather_df %>% 
+  ggplot(aes(x = date, y = tmax, color = name, size = prcp)) +
+  geom_point(alpha = 0.3) + 
+  geom_smooth(se = FALSE) +
+  facet_grid(. ~ name)
+
+```
+
+Practice Problem
+
+```{r}
+
+weather_df %>% 
+  filter(id == 'USW00094728') %>% 
+  mutate(
+    tmax_f = (tmax * 9/5) + 32,
+    tmin_f = (tmin * 9/5) + 32) %>% 
+  ggplot(aes(x = tmin_f, y = tmax_f)) +
+  geom_point(alpha = 0.3) + 
+  geom_smooth(se = FALSE, method = lm)
+```
+
+## small things
+
+```{r}
+
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name), alpha = 0.3, size = 0.8) + 
+  geom_smooth(se = FALSE)
+
+```
+
+```{r}
+
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_hex() # density map could be good for a ton of data points
+
+```
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point(alpha = 0.3, color = "blue")
+```
+
+
+## Univariate Plots
+
+```{r}
+
+weather_df %>% 
+  ggplot(aes(x = tmin)) +
+  geom_histogram()
+```
+
+```{r}
+
+weather_df %>% 
+  ggplot(aes(x = tmin, fill = name)) + # do fill not color!
+  geom_histogram(position = "dodge")
+
+```
+
+can use facet
+
+```{r}
+
+weather_df %>% 
+  ggplot(aes(x = tmin, fill = name)) +
+  geom_histogram() +
+  facet_grid(. ~ name)
+
+```
+
+maybe a density plot?
+
+```{r}
+
+weather_df %>% 
+  ggplot(aes(x = tmin, fill = name)) +
+  geom_density(alpha = 0.3) #alpha is transparency
+
+```
+
+what about boxplots
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = name, y = tmin, fill = name)) + 
+  geom_boxplot()
+```
+
+violin plots
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = name, y = tmin, fill = name)) +
+  geom_violin()
+```
+
+Ridge plots
+
+```{r}
+
+weather_df %>% 
+  ggplot(aes(x = tmin, y = name)) +
+  geom_density_ridges()
+
+```
+
+Learning Assessment:
+```{r}
+
+weather_df %>% 
+  ggplot(aes(x = name, y = prcp, fill = name)) +
+  #geom_violin()
+  geom_boxplot()
+
+weather_df %>% 
+  ggplot(aes(x = prcp, y = name)) +
+  geom_density_ridges()
+
+weather_df %>% 
+  ggplot(aes(x = prcp, fill = name)) +
+  geom_density(alpha = 0.3)
+
+weather_df %>% 
+  filter(prcp > 10) %>% 
+  ggplot(aes(x = prcp, fill = name)) +
+  geom_density(alpha = 0.3)
+
+```
+
+## Saving and embedding plots
+
+
+saving: 
+```{r}
+ggp_weather = 
+  weather_df %>% 
+    ggplot(aes(x = date, y = tmax, color = name)) +
+    geom_point()
+
+
+ggsave("gg_weather.pdf", ggp_weather, width = 8, height = 6)
+```
+
+embedding plots:
+
+```{r, fig.width= 6, fig.asp= .6}
+weather_df %>% 
+  ggplot(aes(x = date, y = tmax, color = name)) +
+  geom_point()
+
+```
+
