@@ -9,6 +9,8 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 remotes::install_github("ropensci/rnoaa")
+library(patchwork)
+
 ```
 
 ## R Markdown
@@ -79,5 +81,107 @@ weather_df %>%
     caption = "Weather data taken from rnoaa package for three stations."
   ) +
   viridis::scale_color_viridis(discrete=TRUE)
+```
+
+## Themes
+
+```{r}
+ggp_scatterplot = 
+  weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.3) +
+  labs(
+    title = "Temperature Scatterplot",
+    x= "Minimum Temp (C)",
+    y= "Maximum Temp (C)",
+    color = "Location",
+    caption = "Weather data taken from rnoaa package for three stations."
+  ) +
+  viridis::scale_color_viridis(discrete=TRUE)
+```
+
+
+```{r}
+ggp_scatterplot +
+  theme(legend.position = "bottom")
+
+ggp_scatterplot +
+  theme_bw() + # this will reset the bottom if it's after it
+  theme(legend.position = "bottom")
+
+ggp_scatterplot +
+  theme(legend.position = "bottom") +
+  ggthemes::theme_excel()
+
+```
+
+Learning Assessment
+```{r}
+la_weather = 
+  weather_df %>% 
+  ggplot(aes(x = date, y = tmax, color = name, size = prcp)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(se = FALSE) +
+  viridis::scale_color_viridis(discrete=TRUE) +
+  labs(
+    title = "Maximum Temp by Location",
+    x= "Date",
+    y= "Maximum Temp (C)",
+    color = "Location",
+    caption = "Weather data taken from rnoaa package for three stations."
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+la_weather
+```
+
+Extra bonus stuff in `ggplot`
+
+
+Use different datasets in dfiferent `geom`s
+```{r}
+central_park_df = 
+  weather_df %>% 
+  filter(name == "CentralPark_NY")
+
+
+molokai_df =
+  weather_df %>% 
+  filter(name == "Molokai_HI")
+
+molokai_df %>% 
+  ggplot(aes(x = date, y = tmax)) +
+  geom_point() +
+  geom_line(data = central_park_df)
+```
+
+```{r}
+
+weather_df %>% 
+  ggplot(aes(x = tmax, fill = name)) +
+  geom_density() +
+  facet_grid(. ~ name)
+```
+
+```{r}
+ggp_tmax_tmin = 
+  weather_df %>% 
+  ggplot(aes(x=tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.3)
+
+ggp_tmax_density = 
+  weather_df %>% 
+  ggplot(aes(x=tmax, fill = name)) +
+  geom_density(alpha = 0.3)
+
+
+ggp_tmax_date = 
+  weather_df %>% 
+  ggplot(aes(x = date, y = tmax, color = name)) +
+  geom_point() +
+  geom_smooth(se = FALSE)
+
+(ggp_tmax_tmin + ggp_tmax_density) / ggp_tmax_date
 ```
 
