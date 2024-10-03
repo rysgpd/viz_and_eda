@@ -226,3 +226,185 @@ weather_df %>%
 | 2022-10-01 |       17.426 |  29.223 |    11.884 |
 | 2022-11-01 |       14.017 |  27.960 |     2.140 |
 | 2022-12-01 |        6.761 |  27.348 |    -0.460 |
+
+grouped mutates
+
+``` r
+weather_df %>% 
+  group_by(name) %>% 
+  mutate(
+    mean_tmax = mean(tmax, na.rm=TRUE),
+    centered_tmax = tmax - mean_tmax) %>% 
+  ggplot(aes(x = date, y = centered_tmax, color = name)) +
+  geom_point()
+```
+
+    ## Warning: Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](eda_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+Find hottest/coldest days
+
+``` r
+weather_df %>% 
+  group_by(name) %>% 
+  mutate(
+    temp_rank = min_rank(desc(tmax))
+  ) %>% 
+  filter(temp_rank < 4)
+```
+
+    ## # A tibble: 16 × 8
+    ## # Groups:   name [3]
+    ##    name           id          date        prcp  tmax  tmin month      temp_rank
+    ##    <chr>          <chr>       <date>     <dbl> <dbl> <dbl> <date>         <int>
+    ##  1 CentralPark_NY USW00094728 2021-06-29     0  35    25.6 2021-06-01         3
+    ##  2 CentralPark_NY USW00094728 2021-06-30   165  36.7  22.8 2021-06-01         1
+    ##  3 CentralPark_NY USW00094728 2022-07-20     0  35    25.6 2022-07-01         3
+    ##  4 CentralPark_NY USW00094728 2022-07-23     0  35    25.6 2022-07-01         3
+    ##  5 CentralPark_NY USW00094728 2022-07-24     0  35    26.1 2022-07-01         3
+    ##  6 CentralPark_NY USW00094728 2022-08-09     8  36.1  25.6 2022-08-01         2
+    ##  7 Molokai_HI     USW00022534 2021-05-31     0  32.2  17.2 2021-05-01         2
+    ##  8 Molokai_HI     USW00022534 2021-09-16     0  32.2  21.1 2021-09-01         2
+    ##  9 Molokai_HI     USW00022534 2022-07-30     0  32.2  22.2 2022-07-01         2
+    ## 10 Molokai_HI     USW00022534 2022-08-06     0  33.3  20.6 2022-08-01         1
+    ## 11 Molokai_HI     USW00022534 2022-08-17     0  32.2  21.1 2022-08-01         2
+    ## 12 Molokai_HI     USW00022534 2022-09-24     0  32.2  22.2 2022-09-01         2
+    ## 13 Molokai_HI     USW00022534 2022-09-30     0  32.2  20   2022-09-01         2
+    ## 14 Waterhole_WA   USS0023B17S 2021-06-27     0  28.5  17.6 2021-06-01         3
+    ## 15 Waterhole_WA   USS0023B17S 2021-06-28     0  30.8  20.7 2021-06-01         2
+    ## 16 Waterhole_WA   USS0023B17S 2021-06-29     0  32.4  17.6 2021-06-01         1
+
+``` r
+weather_df %>% 
+  group_by(name) %>% 
+  filter(
+    min_rank(tmax) < 4
+  ) %>% 
+  arrange(tmax)
+```
+
+    ## # A tibble: 9 × 7
+    ## # Groups:   name [3]
+    ##   name           id          date        prcp  tmax  tmin month     
+    ##   <chr>          <chr>       <date>     <dbl> <dbl> <dbl> <date>    
+    ## 1 Waterhole_WA   USS0023B17S 2021-12-26   102 -11.4 -18.3 2021-12-01
+    ## 2 Waterhole_WA   USS0023B17S 2021-12-27    25  -9.8 -19.6 2021-12-01
+    ## 3 Waterhole_WA   USS0023B17S 2022-12-21     0  -9.6 -18.4 2022-12-01
+    ## 4 CentralPark_NY USW00094728 2022-12-24     0  -9.3 -13.8 2022-12-01
+    ## 5 CentralPark_NY USW00094728 2022-01-15     0  -6   -12.1 2022-01-01
+    ## 6 CentralPark_NY USW00094728 2022-01-21     0  -5.5  -9.9 2022-01-01
+    ## 7 Molokai_HI     USW00022534 2021-03-18   142  21.7  18.9 2021-03-01
+    ## 8 Molokai_HI     USW00022534 2021-01-18   234  22.2  19.4 2021-01-01
+    ## 9 Molokai_HI     USW00022534 2022-11-28    56  22.2  20.6 2022-11-01
+
+``` r
+weather_df %>% 
+  group_by(name) %>% 
+  mutate(
+    lagged_tmax= lag(tmax),
+    temp_change = tmax - lagged_tmax
+  ) %>% 
+  #filter(min_rank(temp_change) < 3)
+  summarize(
+    sd_tmax_change = sd(temp_change, na.rm=TRUE)
+  )
+```
+
+    ## # A tibble: 3 × 2
+    ##   name           sd_tmax_change
+    ##   <chr>                   <dbl>
+    ## 1 CentralPark_NY           4.43
+    ## 2 Molokai_HI               1.24
+    ## 3 Waterhole_WA             3.04
+
+learning assessment check: mean and median bdi at each visit
+
+``` r
+pulse_df = 
+  read_sas("data_import_examples/public_pulse_data.sas7bdat") %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(
+    cols = bdi_score_bl:bdi_score_12m,
+    names_to = "visit",
+    values_to = "bdi_score",
+    names_prefix = "bdi_score_"
+  ) %>% 
+  mutate(visit = ifelse(visit == "bl", "00m", visit))
+  
+pulse_df %>% 
+  group_by(visit) %>% 
+  summarise(
+    mean_bdi = mean(bdi_score, na.rm = TRUE)
+  ) %>% 
+  knitr::kable(digits = 1)
+```
+
+| visit | mean_bdi |
+|:------|---------:|
+| 00m   |      8.0 |
+| 01m   |      6.0 |
+| 06m   |      5.7 |
+| 12m   |      6.1 |
+
+## FAS
+
+``` r
+litters_df = 
+  read_csv("data_import_examples/FAS_litters.csv", na = c("NA", ".", "")) %>% 
+  janitor::clean_names() %>% 
+  separate(
+    group, into = c("dose", "tx_day"), sep=3
+  )
+```
+
+    ## Rows: 49 Columns: 8
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr (2): Group, Litter Number
+    ## dbl (6): GD0 weight, GD18 weight, GD of Birth, Pups born alive, Pups dead @ ...
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+pups_df =
+  read_csv("data_import_examples/FAS_pups.csv", na = c("NA", ".", "")) %>% 
+  janitor::clean_names()
+```
+
+    ## Rows: 313 Columns: 6
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr (1): Litter Number
+    ## dbl (5): Sex, PD ears, PD eyes, PD pivot, PD walk
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+fas_df = 
+  left_join(pups_df, litters_df, by = "litter_number")
+
+fas_df %>% 
+  drop_na(dose) %>% 
+  group_by(dose, tx_day) %>% 
+  summarise(
+    mean_pivot = mean(pd_pivot, na.rm = TRUE) 
+  ) %>% 
+  pivot_wider(
+    names_from = tx_day,
+    values_from =  mean_pivot
+  ) %>% 
+  knitr::kable(digits = 2)
+```
+
+    ## `summarise()` has grouped output by 'dose'. You can override using the
+    ## `.groups` argument.
+
+| dose |    7 |    8 |
+|:-----|-----:|-----:|
+| Con  | 7.00 | 6.24 |
+| Low  | 7.94 | 7.72 |
+| Mod  | 6.98 | 7.04 |
